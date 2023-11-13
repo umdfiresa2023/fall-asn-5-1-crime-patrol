@@ -22,7 +22,16 @@ library("tidyverse")
 Instructions: Upload your team's final dataframe into Posit Cloud. Use the read.csv function to upload the dataframe into the Posit Cloud Environment.
 
 ```{r}
-final <- read.csv("finaldata(1).csv")
+final <- read.csv("finaldata(1).csv") 
+
+final2<-final %>%
+  filter(intersects_with_road==FALSE) %>%
+  group_by(Name, date, treatment) %>%
+  summarise(TEMP_K=mean(TLML), 
+            PREC=mean(PRECTOT),
+            WSPEED=mean(SPEED),
+            total_violent_crime=sum(total_violent_crime), 
+            total_property_crime=sum(total_property_crime))
 ```
 
 **Question 1: What is the unit of each observation in the data? (2 points)**
@@ -35,7 +44,7 @@ Answer: Neighborhood and date.
 
 Instructions: Indicate which columns represent the outcome variable and describe its unit.
 
-Answer: crime rate per neighborhood.
+Answer: number of total violent crime per neighborhood per day.
 
 **Question 3: What are the treatment and control variables?** **(4 points)**
 
@@ -43,7 +52,7 @@ Instructions: For this assignment, you will not distinguish between the treatmen
 
 control: race and gender
 
-treatment: indicator of whether there is wind in each county
+treatment: temperature in kelvin (TEMP_K)
 
 ### **Part 2. Running a Basic Regression**
 
@@ -51,34 +60,37 @@ treatment: indicator of whether there is wind in each county
 
 Instructions: Choose a numerical variable that would best predict the outcome variable. As we are trying to predict the outcome, this variable does not have to be the treatment variable.
 
-Answer: Days where the winds is blowing
+Answer: Higher kelvin values
 
 **Question 5: What does the best-fitting line look like between the numerical variable and the outcome variable? (2 points)**
 
 Instructions: Make a scatterplot that shows the relationship between the numerical variable and the outcome variable. In addition, add geom_smooth(method="lm", se=FALSE) to show the best-fitting line. You can also review this concept in this [DataCamp video.](https://campus.datacamp.com/courses/modeling-with-data-in-the-tidyverse/modeling-with-basic-regression?ex=1)
 
 ```{r}
-fi
-ggplot(final, aes(x = treatment, y = ))
+ggplot(final2, aes(x = TEMP_K, y = total_violent_crime)) + geom_point() + geom_smooth(method="lm", se=FALSE)
 ```
 
 **Question 6: What is the slope and intercept of the best-fitting line? (2 points)**
 
+The slope is: 0.002275973
+
+The intercept is: -0.14613
+
 Instructions: Fit a regression model with the lm(y\~x, data) function to predict the outcome variable using the numerical variable that you have chosen. You can also review this concept in this [DataCamp video.](https://campus.datacamp.com/courses/modeling-with-data-in-the-tidyverse/modeling-with-basic-regression?ex=1)
 
 ```{r}
-
+fit <- lm(total_violent_crime~TEMP_K, final2)
 ```
 
 **Question 7: Based on your regression results, what are the values and description of each letter in the equation** $Y_{it} = \beta_0 + \beta_1 X_{it} + \epsilon_{it}$ **(5 points)**
 
 Instructions: For an example of this, you can review asn-6-4-key.qmd Part 1.
 
-$Y_{it}$ represent the outcome variable \_\_\_\_ for each \_\_\_\_ (geographical unit) $i$, and \_\_\_\_\_ (time unit) $t$.
+$Y_{it}$ represent the outcome variable \_number of violent crimes\_ for each \_count\_ (geographical unit) $i$, and \_day\_ (time unit) $t$.
 
-Based on the regression from Question 6, $\beta_0$ is equal to \_\_\_\_\_.
+Based on the regression from Question 6, $\beta_0$ is equal to \_-0.14613\_.
 
-Based on the regression from Question 6, $\beta_1$ is equal to \_\_\_\_\_.
+Based on the regression from Question 6, $\beta_1$ is equal to \_0.002275973\_.
 
 ### **Part 3. Running Multiple Regressions**
 
@@ -87,7 +99,8 @@ Based on the regression from Question 6, $\beta_1$ is equal to \_\_\_\_\_.
 Instructions: You can review how to do this in this [DataCamp](https://campus.datacamp.com/courses/modeling-with-data-in-the-tidyverse/modeling-with-multiple-regression?ex=4) video. Please use the get_regression_table( ) function to print the output.
 
 ```{r}
-
+model <- lm(total_violent_crime~PREC + WSPEED + TEMP_K, data = final2)
+get_regression_table(model)
 ```
 
 **Question 9: What is the sum of squared residuals of the model that you ran in Question 8? (1 point)**
@@ -95,7 +108,9 @@ Instructions: You can review how to do this in this [DataCamp](https://campus.da
 Instructions: You can review how to do this in this [DataCamp](https://campus.datacamp.com/courses/modeling-with-data-in-the-tidyverse/modeling-with-multiple-regression?ex=4) video.
 
 ```{r}
-
+get_regression_points(model) %>%
+  mutate(sq_residuals = residual^2) %>%
+  summarize(sum_sq_residuals = sum(sq_residuals))
 ```
 
 **Question 10: Run a multiple regression model that uses all possible numerical, binary, and categorical variables to predict the outcome variable. What does the regression table look like? (2 points)**
@@ -117,48 +132,65 @@ library("lfe")
 Write your model below and run it.
 
 ```{r}
-
+BinaryModel<- felm(total_violent_crime ~ PREC + WSPEED + TEMP_K + treatment | Name, final2)
+summary(BinaryModel)
 ```
 
 **Question 11: What is the sum of squared residuals from the model that you ran in Question 10? (2 points)**
 
+sum of squared residuals: 95084.08
+
 Instructions: Because the function get_regression_points( ) does not work with the function felm( ), you have to replace get_regression_points(ModelName) with ModelName\$residuals. The rest of the code is the same as this [DataCamp](https://campus.datacamp.com/courses/modeling-with-data-in-the-tidyverse/modeling-with-multiple-regression?ex=4) video.
 
 ```{r}
+res<-data.frame(BinaryModel$residual)
+names(res)<-"residual"
 
+res2<-res %>%
+  mutate(sq_residuals = residual^2) %>%
+  summarize(sum_sq_residuals = sum(sq_residuals))
 ```
 
 **Question 12: What equation describes the regression in Question 10? What are the values of each coefficient? (2 points)**
 
 Instructions: You can modify the equation shown below. Afterwards, indicate the value of each $\beta$ . To see an example of how categorical variables are written in an equation, see asn-6-4-key.qmd Part 1 Question 4, 5, and 6.
 
-Answer: $Y_{it} = \beta_0 + \beta_1 X_{it} + \epsilon_{it}$
+Answer: $Y_{it} = \beta_0 + \beta_1 precipitation + \beta_2 wind speed + \beta_3 treatment + \beta_4 temperature + neighborhood + \epsilon_{it}$
 
 **Question 13: Create more binary or categorical variables by multiplying binary variables or combining categorical variables together as you see fit to better predict the outcome variable. Explain what real-world factor each new variable represents. (2 points)**
 
 Instructions: You created new variables by multiplying binary variables and combining categorical variables in asn-6-4-key.qmd Part 2. You explained what each variable represents in asn-6-4-key.qmd Part 1 Question 4, 5, and 6.
 
 ```{r}
-
+final3 <- final2 %>%
+  mutate(eff_Wind = WSPEED*treatment)
 ```
 
-Answer:
+Answer: We created an new variable eff_wind that quantifies the wind speed when it's affecting the county.
 
 **Question 14: Run a multiple regression model that uses all possible numerical, binary, and categorical variables to predict the outcome variable. What does the regression table look like? (2 points)**
 
 ```{r}
-
+BinaryModel2<- felm(total_violent_crime ~ PREC + eff_Wind + TEMP_K | Name, final3)
+summary(BinaryModel2)
 ```
 
 **Question 15: What is the sum of squared residuals from the model in Question 13? (2 points)**
 
 ```{r}
+res3<-data.frame(BinaryModel2$residual)
+names(res3)<-"residual"
 
+res4<-res3 %>%
+  mutate(sq_residuals = residual^2) %>%
+  summarize(sum_sq_residuals = sum(sq_residuals))
 ```
+
+sum of squared residuals: 95086.31
 
 **Question 16: Based on the sum of squared residuals, which model in this assignment best predicts the outcome? (1 point)**
 
-Answer:
+Answer: The first model is better because it has a lower number for the squared residuals.
 
 ### **Part 4. Thinking about causal inference**
 
@@ -166,6 +198,6 @@ Note: Every team except Team Electric Grid and The Whistle Blowers has to comple
 
 **Question 17: In your opinion, what are some real-world factors that impact both the treatment and control variables that we have not taken into account? (2 points)**
 
-Answer:
+Answer: The time of year, the population of each neighborhood, economic status of each neighborhood, gender.
 
 You have reached the end of this assignment. Commit and push your updates back into the GitHub repository. You can find the step-by-step tutorial [here.](https://drive.google.com/drive/u/0/folders/1eSMfNoV_ilp4OnID2Ql3YT2qXkhCS7Vm)
