@@ -68,6 +68,16 @@ all<-merge(panel4, df2, by="Name") %>%
          -ang2, -min_ang, -max_ang, -day, -AmInd_AkNa, -NatHaw_Pac, -Other_Race, 
          -TwoOrMore, -Shape__Len, -wind_dir)
 
-write.csv(all, "paneldata.csv", row.names = F)
+all2<-all %>%
+  group_by(Name, treatment) %>%
+  tally() %>%
+  filter(n>100 & treatment==1)
+
+nt<-unique(all2$Name)
+
+all3<-all %>%
+  filter(Name %in% nt)
+
+write.csv(all3, "paneldata.csv", row.names = F)
 
          
