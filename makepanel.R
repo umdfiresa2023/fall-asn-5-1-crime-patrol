@@ -65,7 +65,8 @@ all<-merge(panel4, df2, by="Name") %>%
   mutate(treatment = ifelse(wind_dir > min_ang & wind_dir< max_ang, 1, 0)) %>%
   filter(!is.na(treatment)) %>%
   select(-file, -ULML, -VLML, -X, -xmin, -xmax, -ymin, -ymax, -n1x, -n2x, -n1y, -n2y, -ang1,
-         -ang2, -min_ang, -max_ang)
+         -ang2, -min_ang, -max_ang, -day, -AmInd_AkNa, -NatHaw_Pac, -Other_Race, 
+         -TwoOrMore, -Shape__Len, -wind_dir)
 
 write.csv(all, "paneldata.csv", row.names = F)
 
