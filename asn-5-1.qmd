@@ -34,6 +34,12 @@ final2<-final %>%
             total_property_crime=sum(total_property_crime))
 ```
 
+Your team should have used paneldata.csv instead since it has observations for every county every day. In the data set that you used in this exercise, only observations with crime are recorded.
+
+```{r}
+df<-read.csv("paneldata.csv")
+```
+
 **Question 1: What is the unit of each observation in the data? (2 points)**
 
 Instructions: Identify which columns in the dataset make each observation unique. Usually, there is a column indicating geographical locations and another column showing the frequency of the data. For an example, you can look at asn-6-4-key.qmd Part 1 Question 1.
@@ -70,6 +76,12 @@ Instructions: Make a scatterplot that shows the relationship between the numeric
 ggplot(final2, aes(x = TEMP_K, y = total_violent_crime)) + geom_point() + geom_smooth(method="lm", se=FALSE)
 ```
 
+Please see my suggestion below, with a balanced panel data: (-1)
+
+```{r}
+ggplot(df, aes(x = TLML, y = total_violent_crime)) + geom_point() + geom_smooth(method="lm", se=FALSE)
+```
+
 **Question 6: What is the slope and intercept of the best-fitting line? (2 points)**
 
 The slope is: 0.002275973
@@ -80,6 +92,13 @@ Instructions: Fit a regression model with the lm(y\~x, data) function to predict
 
 ```{r}
 fit <- lm(total_violent_crime~TEMP_K, final2)
+```
+
+Please see my suggestion below:
+
+```{r}
+fit <- lm(total_violent_crime~TLML, df)
+summary(fit)
 ```
 
 **Question 7: Based on your regression results, what are the values and description of each letter in the equation** $Y_{it} = \beta_0 + \beta_1 X_{it} + \epsilon_{it}$ **(5 points)**
@@ -102,6 +121,8 @@ Instructions: You can review how to do this in this [DataCamp](https://campus.da
 model <- lm(total_violent_crime~PREC + WSPEED + TEMP_K, data = final2)
 get_regression_table(model)
 ```
+
+Please see my suggestion below: (-1)
 
 **Question 9: What is the sum of squared residuals of the model that you ran in Question 8? (1 point)**
 
